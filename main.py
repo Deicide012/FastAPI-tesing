@@ -29,25 +29,86 @@ user_id = "17841461816260149"  # Αντικατάστησε με το πραγμ
 async def read_root():
     return {"message": "Hello, this is the backend API!"}
 
-# Endpoint για να φέρεις τα βίντεο από το Instagram
+# Endpoint για να φέρεις τα στατιστικά του προφίλ από το Instagram
 @app.get("/instagram-profile")
 async def get_instagram_profile():
     try:
-        url = f"https://graph.instagram.com/{user_id}/media"
+        url = f"https://graph.instagram.com/{user_id}"
         params = {
-            "fields": "follower_count,profile_views",
+            "fields": "id,username,account_type,follower_count,media_count",
             "access_token": access_token,
         }
         
-        # Κάνουμε την αίτηση στο Instagram Graph API
         async with httpx.AsyncClient() as client:
             response = await client.get(url, params=params)
         
-        # Αν το status code είναι OK, επιστρέφουμε τα δεδομένα
         if response.status_code == 200:
             return response.json()
         else:
-            raise HTTPException(status_code=response.status_code, detail="Error fetching Instagram data.")
+            raise HTTPException(status_code=response.status_code, detail="Error fetching Instagram profile data.")
     except httpx.RequestError as e:
         raise HTTPException(status_code=500, detail=f"An error occurred while making the request: {e}")
 
+# Endpoint για να φέρεις τα media του χρήστη
+@app.get("/instagram-media")
+async def get_instagram_media():
+    try:
+        url = f"https://graph.instagram.com/{user_id}/media"
+        params = {
+            "fields": "id,caption,media_type,media_url,thumbnail_url,timestamp",
+            "access_token": access_token,
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, params=params)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail="Error fetching Instagram media data.")
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred while making the request: {e}")
+
+# Endpoint για να φέρεις insights για ένα συγκεκριμένο media
+@app.get("/media-insights/{media_id}")
+async def get_media_insights(media_id: str):
+    try:
+        url = f"https://graph.instagram.com/{media_id}/insights"
+        params = {
+            "metric": "engagement,impressions,reach",
+            "access_token": access_token,
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, params=params)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail="Error fetching media insights.")
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred while making the request: {e}")
+
+# Endpoint για να φέρεις insights του προφίλ
+@app.get("/profile-insights")
+async def get_profile_insights():
+    try:
+        url = f"https://graph.instagram.com/{user_id}/insights"
+        params = {
+            "metric": "audience_gender_age,audience_locale,impressions,reach",
+            "access_token": access_token,
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, params=params)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail="Error fetching profile insights.")
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred while making the request: {e}")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
